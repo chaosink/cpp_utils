@@ -22,7 +22,26 @@ public:
 		target = value;
 	}
 
+	ChangeMonitorWrap& operator=(const T& value) {
+		target = value;
+		return *this;
+	}
+
 	T& Get() {
+		return target;
+	}
+
+	// needless since the variable is considered to change
+	// and ChangeMonitorWrap shouldn't be declared as const
+//	const T& Get() const {
+//		return target;
+//	}
+
+	operator T() const {
+		return target;
+	}
+
+	operator T&() {
 		return target;
 	}
 

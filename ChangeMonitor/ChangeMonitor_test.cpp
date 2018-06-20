@@ -32,8 +32,8 @@ int main() {
 	bool b = false;
 	char c = 'a';
 
-	ChangeMonitorWrap<int> b_cmw(b); // same as b_cmw(false);
-	ChangeMonitorWrap<float> c_cmw(c); // same as c_cmw('a');
+	ChangeMonitorWrap<bool> b_cmw(b); // same as b_cmw(false);
+	ChangeMonitorWrap<char> c_cmw(c); // same as c_cmw('a');
 
 	ChangeMonitorSummary cms_wrap;
 	cms_wrap.Add(b_cmw);
@@ -51,7 +51,7 @@ int main() {
 
 	std::cout << std::endl;
 
-	// ChangeMonitorSummary merge
+	// ChangeMonitorSummary, merge
 	ChangeMonitorSummary cms(cms_link);
 	cms.Add(cms_wrap);
 
@@ -62,4 +62,15 @@ int main() {
 	std::cout << cms.Changed() << std::endl;
 	c_cmw.Set('c'); // same as c_cmw.Get() = 'c';
 	std::cout << cms.Changed() << std::endl;
+
+
+
+	// ChangeMonitorWrap, type conversion and assignment
+	bool b_value = b_cmw;
+	bool &b_reference = b_cmw;
+	int i_value = b_cmw;
+	const int &i_reference_const = b_cmw;
+
+	b_cmw = true;
+	b_cmw = 1;
 }
