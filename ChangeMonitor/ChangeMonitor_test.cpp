@@ -4,73 +4,119 @@ using namespace cpp_utils;
 #include <iostream>
 using namespace std;
 
+struct A {
+	short s;
+	void *p;
+
+	A() = delete; // default ctor is deleted
+	A(short s, void *p): s(s), p(p) {}
+	A(const A &a): s(a.s), p(a.p) {}
+
+	bool operator!=(const A &a) { // operator "!=" is needed
+		return s != a.s || p != a.p;
+	}
+};
+
 int main() {
-	// ChangeMonitorLink
+	// ChangeMonitorReferenceIndividual
 	int i = 1;
 	float f = 1.1f;
 
-	ChangeMonitorLink<int> i_cml(i);
-	ChangeMonitorLink<float> f_cml(f);
+	ChangeMonitorReferenceIndividual<int> i_cmri(i);
+	ChangeMonitorReferenceIndividual<float> f_cmri(f);
 
-	ChangeMonitorSummary cms_link;
-	cms_link.Add(i_cml);
-	cms_link.Add(f_cml);
+	ChangeMonitorSummary cms_cmri;
+	cms_cmri.Insert(i_cmri);
+	cms_cmri.Insert(f_cmri);
 
-	std::cout << cms_link.Changed() << std::endl;
+	ChangeMonitorReferenceIndividual<float> f_cmri_another(f);
+
+	cout << cms_cmri.Changed(); // 0
 	i = 2;
-	std::cout << cms_link.Changed() << std::endl;
-
-	std::cout << cms_link.Changed() << std::endl;
+	cout << cms_cmri.Changed(); // 1
+	cout << cms_cmri.Changed(); // 0
 	f = 2.2f;
-	std::cout << cms_link.Changed() << std::endl;
+	cout << cms_cmri.Changed(); // 1
+	cout << cms_cmri.Changed(); // 0
+	cout << f_cmri_another.Changed(); // 1
+
+	cout << endl;
 
 
 
-	std::cout << std::endl;
+	// ChangeMonitorReferenceShared
+	long l = 1;
+	double d = 1.1;
 
-	// ChangeMonitorWrap
+	ChangeMonitorReferenceShared<long> l_cmrs(l);
+	ChangeMonitorReferenceShared<double> d_cmrs(d);
+
+	ChangeMonitorSummary cms_cmrs;
+	cms_cmrs.Insert(l_cmrs);
+	cms_cmrs.Insert(d_cmrs);
+
+	ChangeMonitorReferenceShared<double> d_cmrs_another(d);
+
+	cout << cms_cmrs.Changed(); // 0
+	l = 2;
+	cout << cms_cmrs.Changed(); // 1
+	cout << cms_cmrs.Changed(); // 0
+	d = 2.2;
+	cout << cms_cmrs.Changed(); // 1
+	cout << cms_cmrs.Changed(); // 0
+	cout << d_cmrs_another.Changed(); // 0
+
+	cout << endl;
+
+
+
+	// ChangeMonitorInstance
 	bool b = false;
 	char c = 'a';
 
-	ChangeMonitorWrap<bool> b_cmw(b); // same as b_cmw(false);
-	ChangeMonitorWrap<char> c_cmw(c); // same as c_cmw('a');
+	ChangeMonitorInstance<bool> b_cmi(false); // same as b_cmi(b);
+	ChangeMonitorInstance<char> c_cmi('a');   // same as c_cmi(c);
 
-	ChangeMonitorSummary cms_wrap;
-	cms_wrap.Add(b_cmw);
-	cms_wrap.Add(c_cmw);
+	ChangeMonitorSummary cms_cmi;
+	cms_cmi.Insert(b_cmi);
+	cms_cmi.Insert(c_cmi);
 
-	std::cout << cms_wrap.Changed() << std::endl;
-	b_cmw.Set(true); // same as b_cmw.Get() = true;
-	std::cout << cms_wrap.Changed() << std::endl;
+	cout << cms_cmi.Changed(); // 0
+	b_cmi = true;
+	cout << cms_cmi.Changed(); // 1
+	cout << cms_cmi.Changed(); // 0
+	c_cmi = 'b';
+	cout << cms_cmi.Changed(); // 1
+	cout << cms_cmi.Changed(); // 0
 
-	std::cout << cms_wrap.Changed() << std::endl;
-	c_cmw.Set('b'); // same as c_cmw.Get() = 'b';
-	std::cout << cms_wrap.Changed() << std::endl;
-
-
-
-	std::cout << std::endl;
-
-	// ChangeMonitorSummary, merge
-	ChangeMonitorSummary cms(cms_link);
-	cms.Add(cms_wrap);
-
-	std::cout << cms.Changed() << std::endl;
-	f = 3.3f;
-	std::cout << cms.Changed() << std::endl;
-
-	std::cout << cms.Changed() << std::endl;
-	c_cmw.Set('c'); // same as c_cmw.Get() = 'c';
-	std::cout << cms.Changed() << std::endl;
+	cout << endl;
 
 
 
-	// ChangeMonitorWrap, type conversion and assignment
-	bool b_value = b_cmw;
-	bool &b_reference = b_cmw;
-	int i_value = b_cmw;
-	const int &i_reference_const = b_cmw;
+	// ChangeMonitorSummary
+	ChangeMonitorSummary cms(cms_cmi); // copy ctor
+	ChangeMonitorInstance<A> a_cmi(A(2, nullptr));
+	cms.Insert(a_cmi);
+	cms.Merge(cms_cmri);
+	cms.Merge(cms_cmrs);
 
-	b_cmw = true;
-	b_cmw = 1;
+	cout << cms.Changed(); // 0
+	float &ff = f; // type conversion
+	ff = 3.3f;
+	cout << cms.Changed(); // 1
+	cout << cms.Changed(); // 0
+	double &dd = d; // type conversion
+	dd = 3.3;
+	cout << cms.Changed(); // 1
+	cout << cms.Changed(); // 0
+	char &cc = c_cmi; // type conversion
+	cc = 'c';
+	cout << cms.Changed(); // 1
+	cout << cms.Changed(); // 0
+	a_cmi().s = 3; // use operator() to get the reference,
+	// for the lack of the dot operator to access members
+	cout << cms.Changed(); // 1
+	cout << cms.Changed(); // 0
+
+	cout << endl;
 }

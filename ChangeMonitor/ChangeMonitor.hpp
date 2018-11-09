@@ -1,86 +1,122 @@
 #pragma once
 
 #include <vector>
+#include <map>
 
 namespace cpp_utils {
 
-class ChangeMonitorBase {
+class ChangeMonitorInterface {
 public:
 	virtual bool Changed() = 0;
-	virtual ~ChangeMonitorBase() = default;
+	virtual ~ChangeMonitorInterface() = default;
 };
 
 template<typename T>
-class ChangeMonitorWrap : public ChangeMonitorBase {
-	T target, backup;
+class Wrapper {
+	T &target_;
 
 public:
-	ChangeMonitorWrap(const T &value)
-	: target(value), backup(value) {}
+	Wrapper(T &target): target_(target) {}
 
-	void Set(const T &value) {
-		target = value;
-	}
-
-	ChangeMonitorWrap& operator=(const T& value) {
-		target = value;
+	Wrapper& operator=(const T &value) {
+		target_ = value;
 		return *this;
 	}
 
-	T& Get() {
-		return target;
-	}
-
-	// needless since the variable is considered to change
-	// and ChangeMonitorWrap shouldn't be declared as const
-//	const T& Get() const {
-//		return target;
-//	}
-
-	operator T() const {
-		return target;
+	Wrapper& operator=(const Wrapper &w) {
+		target_ = w;
+		return *this;
 	}
 
 	operator T&() {
-		return target;
+		return target_;
 	}
 
-	virtual bool Changed() override {
-		if(target != backup) {
-			backup = target;
-			return true;
-		}
-		return false;
+	operator const T&() const {
+		return target_;
+	}
+
+	T& operator()() { // for the lack of the dot operator to access members
+		return target_;
 	}
 };
 
+// Monitors on the same intance are independent.
+// A monitor's query Changed() won't influence other monitors' query results.
 template<typename T>
-class ChangeMonitorLink : public ChangeMonitorBase {
-	const T &target;
-	T backup;
+class ChangeMonitorReferenceIndividual
+: public Wrapper<T>, public ChangeMonitorInterface {
+	T backup_;
 
 public:
-	ChangeMonitorLink(const T &target)
-	: target(target), backup(target) {}
+	ChangeMonitorReferenceIndividual(T &target): Wrapper<T>(target), backup_(target) {}
 
 	virtual bool Changed() override {
-		if(target != backup) {
-			backup = target;
+		if(backup_ != *this) {
+			backup_ = *this;
 			return true;
 		}
 		return false;
 	}
+
+	using Wrapper<T>::operator=;
+	ChangeMonitorReferenceIndividual& operator=(const ChangeMonitorReferenceIndividual &w)
+		= default;
 };
 
-class ChangeMonitorSummary {
-	std::vector<ChangeMonitorBase*> variables;
+// Monitors on the same intance share the same state.
+// Only one monitor's query Changed() will get true.
+template<typename T>
+class ChangeMonitorReferenceShared
+: public Wrapper<T>, public ChangeMonitorInterface {
+	static std::map<void*, T> backup_;
 
 public:
-	void Add(ChangeMonitorBase &variable) {
+	ChangeMonitorReferenceShared(T &target): Wrapper<T>(target) {
+		backup_[&target] = target;
+	}
+
+	virtual bool Changed() override {
+		if(backup_[&(this->operator T&())] != *this) {
+			backup_[&(this->operator T&())] = *this;
+			return true;
+		}
+		return false;
+	}
+
+	using Wrapper<T>::operator=;
+};
+template<typename T>
+std::map<void*, T> ChangeMonitorReferenceShared<T>::backup_;
+
+// Each monitor owns an instance, so it's independent.
+template<typename T>
+class ChangeMonitorInstance: public ChangeMonitorReferenceIndividual<T> {
+	T target_instance_;
+
+public:
+	ChangeMonitorInstance(const T &value)
+	: ChangeMonitorReferenceIndividual<T>(target_instance_), target_instance_(value) {
+		this->operator T&() = value;
+		ChangeMonitorReferenceIndividual<T>::Changed();
+	}
+
+	using Wrapper<T>::operator=;
+	ChangeMonitorInstance& operator=(const ChangeMonitorInstance &w)
+		= default;
+};
+
+// A Summary that can query the state of a set of instances.
+// The query returns true if one of the instances has changed.
+class ChangeMonitorSummary {
+	std::vector<ChangeMonitorInterface*> variables;
+
+public:
+	void Insert(ChangeMonitorInterface &variable) {
 		variables.push_back(&variable);
 	}
 
-	void Add(const ChangeMonitorSummary &cms) {
+	void Merge(const ChangeMonitorSummary &cms) {
 		variables.reserve(variables.size() + cms.variables.size());
 		variables.insert(variables.end(), cms.variables.begin(), cms.variables.end());
 	}

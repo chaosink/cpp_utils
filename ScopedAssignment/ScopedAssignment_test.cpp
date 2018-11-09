@@ -9,15 +9,40 @@ int main() {
 	float f = 1.1f;
 
 	{
-		ScopedAssignment<int> i_sa(i, 2);
+		ScopedAssignment<int> i_sa(i, 2); // assign new values in ctor
 		ScopedAssignment<float> f_sa(f, 2.2f);
 
-		cout << i << endl;
-		cout << f << endl;
+		cout << i << endl; // 2
+		cout << f << endl; // 2.2
+	} // recover to the old values in detor
+
+	cout << endl;
+
+	cout << i << endl; // 1
+	cout << f << endl; // 1.1
+
+	cout << endl;
+
+	{ // move ctor
+		ScopedAssignment<int> i_sa(i, 2);
+		cout << i << endl; // 2
+		{
+			ScopedAssignment<int> i_sa_another(move(i_sa));
+			cout << i << endl; // 2
+		}
+		cout << i << endl; // 1
 	}
 
 	cout << endl;
 
-	cout << i << endl;
-	cout << f << endl;
+	{ // move assignment
+		ScopedAssignment<int> i_sa(i, 2);
+		cout << i << endl; // 2
+		{
+			ScopedAssignment<int> i_sa_another;
+			i_sa_another = move(i_sa);
+			cout << i << endl; // 2
+		}
+		cout << i << endl; // 1
+	}
 }
