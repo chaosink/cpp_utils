@@ -36,7 +36,7 @@ public:
 		return target_;
 	}
 
-	T& operator()() { // for the lack of the dot operator to access members
+	T& operator()() { // For the lack of the dot operator to access members.
 		return target_;
 	}
 };

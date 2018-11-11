@@ -9,12 +9,12 @@ int main() {
 	float f = 1.1f;
 
 	{
-		ScopedAssignment<int> i_sa(i, 2); // assign new values in ctor
+		ScopedAssignment<int> i_sa(i, 2); // Assign new values in ctor.
 		ScopedAssignment<float> f_sa(f, 2.2f);
 
 		cout << i << endl; // 2
 		cout << f << endl; // 2.2
-	} // recover to the old values in detor
+	} // Recover to the old values in detor.
 
 	cout << endl;
 

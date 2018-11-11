@@ -8,11 +8,11 @@ struct A {
 	short s;
 	void *p;
 
-	A() = delete; // default ctor is deleted
+	A() = delete; // Default ctor is deleted.
 	A(short s, void *p): s(s), p(p) {}
 	A(const A &a): s(a.s), p(a.p) {}
 
-	bool operator!=(const A &a) { // operator "!=" is needed
+	bool operator!=(const A &a) { // Operator "!=" is needed.
 		return s != a.s || p != a.p;
 	}
 };
@@ -113,8 +113,8 @@ int main() {
 	cc = 'c';
 	cout << cms.Changed(); // 1
 	cout << cms.Changed(); // 0
-	a_cmi().s = 3; // use operator() to get the reference,
-	// for the lack of the dot operator to access members
+	a_cmi().s = 3; // Use operator() to get the reference,
+	// for the lack of the dot operator to access members.
 	cout << cms.Changed(); // 1
 	cout << cms.Changed(); // 0
 
