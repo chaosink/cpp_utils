@@ -22,13 +22,14 @@ int main() {
 	int i = 1;
 	float f = 1.1f;
 
-	ChangeMonitorReferenceIndividual<int> i_cmri(i);
-	ChangeMonitorReferenceIndividual<float> f_cmri(f);
-
-	ChangeMonitorSummary cms_cmri;
-	cms_cmri.Insert(i_cmri);
-	cms_cmri.Insert(f_cmri);
-
+	ChangeMonitorReferenceIndividual<int> i_cmri(i); // A monitor on i.
+	ChangeMonitorReferenceIndividual<float> f_cmri(f); // A monitor on f.
+									//             \_
+	ChangeMonitorSummary cms_cmri;	//              \_
+	cms_cmri.Insert(i_cmri);		//               \_
+	cms_cmri.Insert(f_cmri);		//                \_
+			 						//                 \_
+	// Another monitor on f, and a different state from f_cmri's.
 	ChangeMonitorReferenceIndividual<float> f_cmri_another(f);
 
 	cout << cms_cmri.Changed(); // 0
@@ -36,25 +37,30 @@ int main() {
 	cout << cms_cmri.Changed(); // 1
 	cout << cms_cmri.Changed(); // 0
 	f = 2.2f;
+	// f_cmri's state is "changed".
 	cout << cms_cmri.Changed(); // 1
+	// f_cmri's state is "unchanged".
 	cout << cms_cmri.Changed(); // 0
+	// f_cmri_another's state is still "changed",
+	// because its state is independent from f_cmri's.
 	cout << f_cmri_another.Changed(); // 1
 
 	cout << endl;
 
-
+/*--------------------------------------------------*/
 
 	// ChangeMonitorReferenceShared
 	long l = 1;
 	double d = 1.1;
 
-	ChangeMonitorReferenceShared<long> l_cmrs(l);
-	ChangeMonitorReferenceShared<double> d_cmrs(d);
-
-	ChangeMonitorSummary cms_cmrs;
-	cms_cmrs.Insert(l_cmrs);
-	cms_cmrs.Insert(d_cmrs);
-
+	ChangeMonitorReferenceShared<long> l_cmrs(l); // A monitor on l.
+	ChangeMonitorReferenceShared<double> d_cmrs(d); // A monitor on d.
+									//          \_
+	ChangeMonitorSummary cms_cmrs;	//           \_
+	cms_cmrs.Insert(l_cmrs);		//            \_
+	cms_cmrs.Insert(d_cmrs);		//             \_
+									//              \_
+	// Another monitor on d, but the same state with d_cmrs's.
 	ChangeMonitorReferenceShared<double> d_cmrs_another(d);
 
 	cout << cms_cmrs.Changed(); // 0
@@ -62,27 +68,30 @@ int main() {
 	cout << cms_cmrs.Changed(); // 1
 	cout << cms_cmrs.Changed(); // 0
 	d = 2.2;
+	// d_cmrs's state is changed.
 	cout << cms_cmrs.Changed(); // 1
+	// d_cmrs's state is unchanged.
 	cout << cms_cmrs.Changed(); // 0
+	// d_cmrs_another's state is also unchanged,
+	// because d_cmrs's state (the shared state) has already been queried.
 	cout << d_cmrs_another.Changed(); // 0
-
 	cout << endl;
 
-
+/*--------------------------------------------------*/
 
 	// ChangeMonitorInstance
 	bool b = false;
 	char c = 'a';
 
-	ChangeMonitorInstance<bool> b_cmi(false); // same as b_cmi(b);
-	ChangeMonitorInstance<char> c_cmi('a');   // same as c_cmi(c);
+	ChangeMonitorInstance<bool> b_cmi(false); // Same as b_cmi(b).
+	ChangeMonitorInstance<char> c_cmi('a');   // Same as c_cmi(c).
 
 	ChangeMonitorSummary cms_cmi;
 	cms_cmi.Insert(b_cmi);
 	cms_cmi.Insert(c_cmi);
 
 	cout << cms_cmi.Changed(); // 0
-	b_cmi = true;
+	b_cmi = true; // "operator=" overloaded to modify the value
 	cout << cms_cmi.Changed(); // 1
 	cout << cms_cmi.Changed(); // 0
 	c_cmi = 'b';
@@ -91,14 +100,14 @@ int main() {
 
 	cout << endl;
 
-
+/*--------------------------------------------------*/
 
 	// ChangeMonitorSummary
 	ChangeMonitorSummary cms(cms_cmi); // copy ctor
-	ChangeMonitorInstance<A> a_cmi(A(2, nullptr));
-	cms.Insert(a_cmi);
-	cms.Merge(cms_cmri);
+	cms.Merge(cms_cmri); // Merge previous ChangeMonitorSummarys in.
 	cms.Merge(cms_cmrs);
+	ChangeMonitorInstance<A> a_cmi(A(2, nullptr));
+	cms.Insert(a_cmi); // Add a new ChangeMonitor.
 
 	cout << cms.Changed(); // 0
 	float &ff = f; // type conversion
@@ -114,7 +123,7 @@ int main() {
 	cout << cms.Changed(); // 1
 	cout << cms.Changed(); // 0
 	a_cmi().s = 3; // Use operator() to get the reference,
-	// for the lack of the dot operator to access members.
+				   // for the lack of the dot operator to access members.
 	cout << cms.Changed(); // 1
 	cout << cms.Changed(); // 0
 
