@@ -17,22 +17,21 @@ class Wrapper {
 
 public:
 	Wrapper(T &target): target_(target) {}
+	// Disable copy ctor, and hence the derived's.
+	Wrapper(const Wrapper &) = delete;
+	// Disable move ctor, and hence the derived's.
+	Wrapper(Wrapper &&) = delete;
 
 	Wrapper& operator=(const T &value) {
 		target_ = value;
 		return *this;
 	}
-
-	Wrapper& operator=(const Wrapper &w) {
-		target_ = w;
-		return *this;
-	}
+	// Disable copy assignment, and hence the derived's.
+	Wrapper& operator=(const Wrapper &) = delete;
+	// Disable move assignment, and hence the derived's.
+	Wrapper& operator=(Wrapper &&) = delete;
 
 	operator T&() {
-		return target_;
-	}
-
-	operator const T&() const {
 		return target_;
 	}
 
@@ -60,8 +59,6 @@ public:
 	}
 
 	using Wrapper<T>::operator=;
-	ChangeMonitorReferenceIndividual& operator=(const ChangeMonitorReferenceIndividual &w)
-		= default;
 };
 
 // Monitors on the same intance share the same state.
@@ -102,8 +99,6 @@ public:
 	}
 
 	using Wrapper<T>::operator=;
-	ChangeMonitorInstance& operator=(const ChangeMonitorInstance &w)
-		= default;
 };
 
 // A Summary that can query the state of a set of instances.
