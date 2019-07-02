@@ -118,10 +118,11 @@ public:
 
 	bool Changed() {
 		bool changed = false;
-		for(auto &v: variables) {
-			if(v->Changed())
+		for(auto &v: variables)
+			if(v->Changed()) {
 				changed = true;
-		}
+				// No `break;`, because `Changed()` will update the backup data.
+			}
 		return changed;
 	}
 };
