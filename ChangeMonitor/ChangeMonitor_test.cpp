@@ -91,7 +91,7 @@ int main() {
 	cms_cmi.Insert(c_cmi);
 
 	cout << cms_cmi.Changed(); // 0
-	b_cmi = true; // "operator=" overloaded to modify the value
+	b_cmi = true; // "operator=" overloaded to modify the value.
 	cout << cms_cmi.Changed(); // 1
 	cout << cms_cmi.Changed(); // 0
 	c_cmi = 'b';

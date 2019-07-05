@@ -32,7 +32,7 @@ public:
 		if(target_) *target_ = backup_;
 		target_ = other.target_;
 		backup_ = other.backup_;
-		other.target_ = nullptr; // other has no effect any more
+		other.target_ = nullptr; // other has no effect any more.
 		return *this;
 	}
 };
