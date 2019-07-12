@@ -33,40 +33,52 @@ int main() {
 	auto window = InitGLFW("Toggle_test", 512, 384);
 
 	// Key: SPACE
-	// No action to be taken.
-	Toggle toggle_space = Toggle(true, [&window]() {
-		return glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-	});
+	Toggle toggle_space = Toggle(
+		[&window]() {
+			return glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+		},
+		true
+	);
 
 	// Key: F
-	// Same action to be taken when the state changes from ON to OFF and from OFF to ON.
-	Toggle toggle_f = Toggle(true, [&window]() {
-		return glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
-	}, [&toggle_space](bool state) {
-		cout << "Key F pressed. State changes to " << state << endl;
-	});
+	Toggle toggle_f = Toggle(
+		[&window]() {
+			return glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
+		},
+		true
+	);
 
 	// Key combination: Ctrl+Shift+C
-	// Different actions to be taken when the state changes from ON to OFF and from OFF to ON.
-	Toggle toggle_ctrl_shift_c = Toggle(true, [&window]() {
-		return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
-			&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
-			&& glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-	}, [](bool state) {
-		cout << "Off2On(): Key Ctrl+Shift+C pressed. State changes to " << state << endl;
-	}, [](bool state) {
-		cout << "On2Off(): Key Ctrl+Shift+C pressed. State changes to " << state << endl;
-	});
+	Toggle toggle_ctrl_shift_c = Toggle(
+		[&window]() {
+			return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
+				&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
+				&& glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
+		},
+		true
+	);
 
 	bool state_space = toggle_space.state();
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
+		// No action to be taken.
 		toggle_space.Update();
 		if(state_space != toggle_space.state()) {
 			state_space = toggle_space.state();
 			cout << "Key SPACE's state changes to " << state_space << endl;
 		}
-		toggle_f.Update();
-		toggle_ctrl_shift_c.Update();
+		// Same action to be taken when the state changes from ON to OFF and from OFF to ON.
+		toggle_f.Update([&toggle_space](bool state) {
+			cout << "Key F pressed. State changes to " << state << endl;
+		});
+		// Different actions to be taken when the state changes from ON to OFF and from OFF to ON.
+		toggle_ctrl_shift_c.Update(
+			[](bool state) {
+				cout << "Off2On(): Key Ctrl+Shift+C pressed. State changes to " << state << endl;
+			},
+			[](bool state) {
+				cout << "On2Off(): Key Ctrl+Shift+C pressed. State changes to " << state << endl;
+			}
+		);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -81,21 +93,26 @@ int main() {
 	int second = 0;
 
 	// Alarm every one second.
-	Toggle toggle_alarm_1s = Toggle(false, [&start, &second]() {
-		std::chrono::duration<double> delta = std::chrono::steady_clock::now() - start;
-		if(delta.count() > second) {
-			second++;
-			return true;
-		} else {
-			return false;
-		}
-	}, [&second](bool state) {
-		cout << second << " second(s). State changes to " << state << endl;
-	}, nullptr, // Set on2off as nullptr to make it same as off2on.
+	Toggle toggle_alarm_1s = Toggle(
+		[&start, &second]() {
+			std::chrono::duration<double> delta = std::chrono::steady_clock::now() - start;
+			if(delta.count() > second) {
+				second++;
+				return true;
+			} else {
+				return false;
+			}
+		},
+		false,
 		Toggle::None // For std::chrono timer, anti-jitter is needless.
 	);
 	while(second < 10) {
-		toggle_alarm_1s.Update();
+		toggle_alarm_1s.Update(
+			[&second](bool state) {
+				cout << second << " second(s). State changes to " << state << endl;
+			},
+			nullptr // Set on2off as nullptr to make it same as off2on.
+		);
 	}
 
 
@@ -103,20 +120,25 @@ int main() {
 	second = 0;
 
 	// Alarm every two seconds.
-	Toggle toggle_alarm_2s = Toggle(false, [&start, &second]() {
-		std::chrono::duration<double> delta = std::chrono::steady_clock::now() - start;
-		if(delta.count() > second) {
-			second++;
-			return true;
-		} else {
-			return false;
-		}
-	}, [&second](bool state) {
-		cout << second << " second(s). State changes to " << state << endl;
-	}, [](bool){}, // Do nothing when the state changes from ON to OFF.
+	Toggle toggle_alarm_2s = Toggle(
+		[&start, &second]() {
+			std::chrono::duration<double> delta = std::chrono::steady_clock::now() - start;
+			if(delta.count() > second) {
+				second++;
+				return true;
+			} else {
+				return false;
+			}
+		},
+		false,
 		Toggle::None // For std::chrono timer, anti-jitter is needless.
 	);
 	while(second < 10) {
-		toggle_alarm_2s.Update();
+		toggle_alarm_2s.Update(
+			[&second](bool state) {
+				cout << second << " second(s). State changes to " << state << endl;
+			},
+			[](bool) {} // Do nothing when the state changes from ON to OFF.
+		);
 	}
 }
