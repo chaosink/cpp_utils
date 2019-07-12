@@ -17,6 +17,10 @@ else()
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 endif()
 
+include_directories(
+	common
+)
+
 add_executable(ChangeMonitor_test
 	ChangeMonitor/ChangeMonitor_test.cpp
 )
@@ -29,6 +33,14 @@ add_executable(Toggle_test
 	Toggle/Toggle_test.cpp
 )
 target_link_libraries(Toggle_test
+	GL
+	glfw
+)
+
+add_executable(Button_test
+	Button/Button_test.cpp
+)
+target_link_libraries(Button_test
 	GL
 	glfw
 )
