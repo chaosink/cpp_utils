@@ -32,8 +32,8 @@ public:
 	// `on2off()` will be same as `off2of()` if it's `nullptr`: the same action will be taken.
 	// Both of them could be `nullptr`: no action taken when the toggle is switched.
 	bool Update(
-		const std::function<void(bool)> &off2on = nullptr,
-		const std::function<void(bool)> &on2off = nullptr
+		const std::function<void(bool)> &off2on,
+		const std::function<void(bool)> &on2off
 	) {
 		if(count_-- > 0) return state_;
 		if(switched_()) {
@@ -51,6 +51,91 @@ public:
 					else if(off2on)
 						off2on(state_);
 				}
+				switching_ = true;
+				count_ = jitter_;
+			}
+		} else {
+			if(switching_) {
+				switching_ = false;
+				count_ = jitter_;
+			}
+		}
+		return state_;
+	}
+
+	bool Update(
+		const std::function<void(bool)> &on_switch
+	) {
+		if(count_-- > 0) return state_;
+		if(switched_()) {
+			if(!switching_) {
+				state_ = !state_;
+				if(on_switch) on_switch(state_);
+				switching_ = true;
+				count_ = jitter_;
+			}
+		} else {
+			if(switching_) {
+				switching_ = false;
+				count_ = jitter_;
+			}
+		}
+		return state_;
+	}
+
+	bool Update(
+		const std::function<void()> &off2on,
+		const std::function<void()> &on2off
+	) {
+		if(count_-- > 0) return state_;
+		if(switched_()) {
+			if(!switching_) {
+				state_ = !state_;
+				if(state_) {
+					if(off2on) off2on();
+				} else {
+					if(on2off)
+						on2off();
+					else if(off2on)
+						off2on();
+				}
+				switching_ = true;
+				count_ = jitter_;
+			}
+		} else {
+			if(switching_) {
+				switching_ = false;
+				count_ = jitter_;
+			}
+		}
+		return state_;
+	}
+
+	bool Update(
+		const std::function<void()> &on_switch
+	) {
+		if(count_-- > 0) return state_;
+		if(switched_()) {
+			if(!switching_) {
+				state_ = !state_;
+				if(on_switch) on_switch();
+				switching_ = true;
+				count_ = jitter_;
+			}
+		} else {
+			if(switching_) {
+				switching_ = false;
+				count_ = jitter_;
+			}
+		}
+		return state_;
+	}
+
+	bool Update() {
+		if(count_-- > 0) return state_;
+		if(switched_()) {
+			if(!switching_) {
+				state_ = !state_;
 				switching_ = true;
 				count_ = jitter_;
 			}
