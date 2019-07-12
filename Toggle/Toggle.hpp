@@ -10,9 +10,9 @@ namespace cpp_utils {
 // Toggle can be switched from one state to another.
 // Actions can be set which will be taken when (just after) state changes.
 class Toggle {
-	const std::function<bool()> pressed_;
+	const std::function<bool()> switched_;
 	bool state_;
-	bool pressing_ = false;
+	bool switching_ = false;
 	const int jitter_; // For anti-jitter.
 	int count_ = -1;
 
@@ -23,7 +23,7 @@ public:
 	};
 
 	Toggle(const std::function<bool()> &pressed, bool state = false, int jitter = Keyboard)
-	: pressed_(pressed), state_(state), jitter_(jitter) {
+	: switched_(pressed), state_(state), jitter_(jitter) {
 		assert(pressed != nullptr);
 	}
 
@@ -36,8 +36,8 @@ public:
 		const std::function<void(bool)> &on2off = nullptr
 	) {
 		if(count_-- > 0) return state_;
-		if(pressed_()) {
-			if(!pressing_) {
+		if(switched_()) {
+			if(!switching_) {
 				// state_ changes just before actions taken.
 				state_ = !state_;
 				if(state_) {
@@ -51,12 +51,12 @@ public:
 					else if(off2on)
 						off2on(state_);
 				}
-				pressing_ = true;
+				switching_ = true;
 				count_ = jitter_;
 			}
 		} else {
-			if(pressing_) {
-				pressing_ = false;
+			if(switching_) {
+				switching_ = false;
 				count_ = jitter_;
 			}
 		}

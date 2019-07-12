@@ -90,7 +90,7 @@ int main() {
 			[&second](bool state) {
 				cout << second << " second(s). State changes to " << state << endl;
 			},
-			nullptr // Set on2off as nullptr to make it same as off2on.
+			nullptr // Set On2Off as nullptr to make it same as off2on.
 		);
 	}
 
