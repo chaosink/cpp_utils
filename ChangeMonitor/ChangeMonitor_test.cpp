@@ -80,8 +80,8 @@ int main() {
 /*--------------------------------------------------*/
 
 	// ChangeMonitorInstance
-	bool b = false;
-	char c = 'a';
+	[[maybe_unused]] bool b = false;
+	[[maybe_unused]] char c = 'a';
 
 	ChangeMonitorInstance<bool> b_cmi(false); // Same as b_cmi(b).
 	ChangeMonitorInstance<char> c_cmi('a');   // Same as c_cmi(c).
