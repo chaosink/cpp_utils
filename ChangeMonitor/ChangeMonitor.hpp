@@ -51,7 +51,7 @@ public:
 	ChangeMonitorReferenceIndividual(T &target): Wrapper<T>(target), backup_(target) {}
 
 	virtual bool Changed() override {
-		if(backup_ != *this) {
+		if(backup_ != this->operator T&()) {
 			backup_ = *this;
 			return true;
 		}
