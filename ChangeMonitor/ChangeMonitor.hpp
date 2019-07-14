@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <cassert>
 
 namespace cpp_utils {
 
@@ -13,17 +14,19 @@ public:
 
 template<typename T>
 class Wrapper {
-	T &target_;
+	T *target_ = nullptr;
 
 public:
-	Wrapper(T &target): target_(target) {}
+	Wrapper() {}
+	Wrapper(T &target): target_(&target) {}
 	// Disable copy ctor, and hence the derived's.
 	Wrapper(const Wrapper &) = delete;
 	// Disable move ctor, and hence the derived's.
 	Wrapper(Wrapper &&) = delete;
 
 	Wrapper& operator=(const T &value) {
-		target_ = value;
+		assert(target_);
+		*target_ = value;
 		return *this;
 	}
 	// Disable copy assignment, and hence the derived's.
@@ -31,12 +34,18 @@ public:
 	// Disable move assignment, and hence the derived's.
 	Wrapper& operator=(Wrapper &&) = delete;
 
+	void Wrap(T &target) {
+		target_ = &target;
+	}
+
 	operator T&() {
-		return target_;
+		assert(target_);
+		return *target_;
 	}
 
 	T& operator()() { // For the lack of the dot operator to access members.
-		return target_;
+		assert(target_);
+		return *target_;
 	}
 };
 
@@ -88,14 +97,19 @@ std::map<void*, T> ChangeMonitorReferenceShared<T>::backup_;
 
 // Each monitor owns an instance, so it's independent.
 template<typename T>
-class ChangeMonitorInstance: public ChangeMonitorReferenceIndividual<T> {
+class ChangeMonitorInstance
+: public Wrapper<T>, public ChangeMonitorInterface {
 	T target_instance_;
+	ChangeMonitorReferenceIndividual<T> monitor_;
 
 public:
 	ChangeMonitorInstance(const T &value)
-	: ChangeMonitorReferenceIndividual<T>(target_instance_), target_instance_(value) {
-		this->operator T&() = value;
-		ChangeMonitorReferenceIndividual<T>::Changed();
+	: target_instance_(value), monitor_(target_instance_) {
+		Wrapper<T>::Wrap(target_instance_);
+	}
+
+	virtual bool Changed() override {
+		return monitor_.Changed();
 	}
 
 	using Wrapper<T>::operator=;
