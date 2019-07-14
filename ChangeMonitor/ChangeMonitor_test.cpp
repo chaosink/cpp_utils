@@ -4,21 +4,36 @@ using namespace cpp_utils;
 #include <iostream>
 using namespace std;
 
-struct A {
-	short s;
-	void *p;
-
-	A() = delete; // Default ctor is deleted.
-	A(short s, void *p): s(s), p(p) {}
-	A(const A &a): s(a.s), p(a.p) {}
-
-	bool operator!=(const A &a) { // Operator "!=" is needed.
-		return s != a.s || p != a.p;
-	}
-};
-
 int main() {
-	// ChangeMonitorReferenceIndividual
+// Wrapper
+	{
+		string s = "hello";
+		Wrapper<string> s_w; // Constructor without wrapping s.
+		// s_w = "world"; // Error: assignment before wrapping.
+		// cout << string(s_w) << endl; // Error: access before wrapping.
+		s_w.Wrap(s);
+		cout << string(s_w) << endl; // hello
+		s_w = "world";
+		cout << string(s_w) << endl; // world
+	}
+
+	{
+		string s0 = "hello";
+		Wrapper<string> s_w(s0); // Constructor with binding to s.
+		cout << string(s_w) << endl; // hello
+		s_w = "world";
+		cout << string(s_w) << endl; // world
+
+		string s1 = "foo";
+		s_w.Wrap(s1); // Change wrapping target.
+		cout << string(s_w) << endl; // foo
+		s_w = "bar";
+		cout << string(s_w) << endl; // bar
+	}
+
+/*--------------------------------------------------*/
+
+// ChangeMonitorReferenceIndividual
 	int i = 1;
 	float f = 1.1f;
 
@@ -49,7 +64,7 @@ int main() {
 
 /*--------------------------------------------------*/
 
-	// ChangeMonitorReferenceShared
+// ChangeMonitorReferenceShared
 	long l = 1;
 	double d = 1.1;
 
@@ -79,22 +94,28 @@ int main() {
 
 /*--------------------------------------------------*/
 
-	// ChangeMonitorInstance
-	[[maybe_unused]] bool b = false;
+// ChangeMonitorInstance
 	[[maybe_unused]] char c = 'a';
+	[[maybe_unused]] string s = "hello";
+	[[maybe_unused]] vector<int> vi = {1, 2, 3};
 
-	ChangeMonitorInstance<bool> b_cmi(false); // Same as b_cmi(b).
 	ChangeMonitorInstance<char> c_cmi('a');   // Same as c_cmi(c).
+	ChangeMonitorInstance<string> s_cmi("hello"); // Same as s_cmi(s).
+	ChangeMonitorInstance<vector<int>> vi_cmi({1, 2, 3}); // Same as vi_cmi(vi).
 
 	ChangeMonitorSummary cms_cmi;
-	cms_cmi.Insert(b_cmi);
 	cms_cmi.Insert(c_cmi);
+	cms_cmi.Insert(s_cmi);
+	cms_cmi.Insert(vi_cmi);
 
 	cout << cms_cmi.Changed(); // 0
-	b_cmi = true; // "operator=" overloaded to modify the value.
+	c_cmi = 'b'; // "operator=" overloaded to modify the value.
 	cout << cms_cmi.Changed(); // 1
 	cout << cms_cmi.Changed(); // 0
-	c_cmi = 'b';
+	s_cmi = "world";
+	cout << cms_cmi.Changed(); // 1
+	cout << cms_cmi.Changed(); // 0
+	vi_cmi().push_back(4);
 	cout << cms_cmi.Changed(); // 1
 	cout << cms_cmi.Changed(); // 0
 
@@ -102,10 +123,24 @@ int main() {
 
 /*--------------------------------------------------*/
 
-	// ChangeMonitorSummary
+// ChangeMonitorSummary
 	ChangeMonitorSummary cms(cms_cmi); // copy ctor
 	cms.Merge(cms_cmri); // Merge previous ChangeMonitorSummarys in.
 	cms.Merge(cms_cmrs);
+
+	struct A {
+		short s;
+		void *p;
+
+		A() = delete; // Default ctor is deleted.
+		A(short s, void *p): s(s), p(p) {}
+		A(const A &a): s(a.s), p(a.p) {}
+
+		bool operator!=(const A &a) { // Operator "!=" is needed.
+			return s != a.s || p != a.p;
+		}
+	};
+
 	ChangeMonitorInstance<A> a_cmi(A(2, nullptr));
 	cms.Insert(a_cmi); // Add a new ChangeMonitor.
 
