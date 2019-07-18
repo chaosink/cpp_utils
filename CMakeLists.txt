@@ -4,14 +4,16 @@ project(cpp_utils LANGUAGES CXX)
 # compiling options
 set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
-	set(EMBREE_MAX_ISA "SSE4.2" CACHE STRING "Selects highest ISA to support.")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /openmp -d2SSAOptimizer-") # -d2SSAOptimizer- for MSVC bug
 else()
 	set(CXX_WARNINGS "-Wall -Wextra -Wpointer-arith -Wcast-align -fstrict-aliasing")
 	if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 		set(CXX_WARNINGS "${CXX_WARNINGS} -Wno-maybe-uninitialized")
 	endif()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARNINGS} -fvisibility-inlines-hidden -O3 -fopenmp")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARNINGS} -fvisibility-inlines-hidden")
+
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -fopenmp")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX__FLAGS_RELEASE} -O3 -fopenmp")
 
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
